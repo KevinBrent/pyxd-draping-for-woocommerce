@@ -1,0 +1,19 @@
+.kbpyxd-draping {
+	clear: both;
+	margin: 1rem 0;
+}
+
+.kbpyxd-draping__button[aria-busy="true"] {
+	cursor: wait;
+	opacity: 0.75;
+}
+
+.kbpyxd-draping__status {
+	margin-top: 0.625rem;
+	font-size: 0.9375rem;
+}
+
+.kbpyxd-draping__status--error {
+	color: #b32d2e;
+}
+
