@@ -90,9 +90,28 @@ final class Admin {
 				'type'    => 'select',
 				'default' => 'after_form',
 				'options' => [
-					'before_form'  => __( 'Before add-to-cart form', 'pyxd-draping-for-woocommerce' ),
-					'after_button' => __( 'After add-to-cart button', 'pyxd-draping-for-woocommerce' ),
-					'after_form'   => __( 'After add-to-cart form', 'pyxd-draping-for-woocommerce' ),
+					'before_form'                  => __( 'Before add-to-cart form', 'pyxd-draping-for-woocommerce' ),
+					'after_button'                 => __( 'After add-to-cart button', 'pyxd-draping-for-woocommerce' ),
+					'after_form'                   => __( 'After add-to-cart form', 'pyxd-draping-for-woocommerce' ),
+					'single_product_summary'       => __( 'Single product summary', 'pyxd-draping-for-woocommerce' ),
+					'product_meta_start'           => __( 'Product meta start', 'pyxd-draping-for-woocommerce' ),
+					'product_meta_end'             => __( 'Product meta end', 'pyxd-draping-for-woocommerce' ),
+					'product_thumbnails'           => __( 'Product thumbnails', 'pyxd-draping-for-woocommerce' ),
+					'after_single_product_summary' => __( 'After single product summary', 'pyxd-draping-for-woocommerce' ),
+					'shortcode'                    => __( 'Shortcode only (no automatic output)', 'pyxd-draping-for-woocommerce' ),
+				],
+			],
+			[
+				'title'             => __( 'Action hook priority', 'pyxd-draping-for-woocommerce' ),
+				'desc'              => __( 'Controls when the button renders relative to other callbacks on the selected WooCommerce action hook.', 'pyxd-draping-for-woocommerce' ),
+				'id'                => 'kbpyxd_hook_priority',
+				'type'              => 'number',
+				'default'           => 20,
+				'desc_tip'          => true,
+				'custom_attributes' => [
+					'min'  => '-9999',
+					'max'  => '9999',
+					'step' => '1',
 				],
 			],
 			[
@@ -177,4 +196,3 @@ final class Admin {
 		return $links;
 	}
 }
-

@@ -17,6 +17,7 @@ $kbpyxd_options = [
 	'kbpyxd_company_id',
 	'kbpyxd_button_label',
 	'kbpyxd_button_position',
+	'kbpyxd_hook_priority',
 	'kbpyxd_hover_preview',
 	'kbpyxd_preload',
 ];
@@ -24,4 +25,3 @@ $kbpyxd_options = [
 foreach ( $kbpyxd_options as $kbpyxd_option ) {
 	delete_option( $kbpyxd_option );
 }
-

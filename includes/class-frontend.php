@@ -32,6 +32,7 @@ final class Frontend {
 	 * @return void
 	 */
 	public static function register(): void {
+		add_shortcode( 'pyxd_draping', [ self::class, 'render_shortcode' ] );
 		add_action( 'wp', [ self::class, 'register_product_hooks' ] );
 	}
 
@@ -53,8 +54,9 @@ final class Frontend {
 
 		$company_id = trim( (string) get_option( 'kbpyxd_company_id', '' ) );
 		$flexible_id = self::get_flexible_id( $product );
+		$position    = (string) get_option( 'kbpyxd_button_position', 'after_form' );
 
-		if ( '' === $company_id || '' === $flexible_id ) {
+		if ( '' === $company_id || ( 'shortcode' !== $position && '' === $flexible_id ) ) {
 			return;
 		}
 
@@ -62,15 +64,24 @@ final class Frontend {
 
 		add_action( 'wp_enqueue_scripts', [ self::class, 'enqueue_assets' ] );
 
-		$position = (string) get_option( 'kbpyxd_button_position', 'after_form' );
+		if ( 'shortcode' === $position ) {
+			return;
+		}
+
 		$hooks    = [
-			'before_form'  => 'woocommerce_before_add_to_cart_form',
-			'after_button' => 'woocommerce_after_add_to_cart_button',
-			'after_form'   => 'woocommerce_after_add_to_cart_form',
+			'before_form'                  => 'woocommerce_before_add_to_cart_form',
+			'after_button'                 => 'woocommerce_after_add_to_cart_button',
+			'after_form'                   => 'woocommerce_after_add_to_cart_form',
+			'single_product_summary'       => 'woocommerce_single_product_summary',
+			'product_meta_start'           => 'woocommerce_product_meta_start',
+			'product_meta_end'             => 'woocommerce_product_meta_end',
+			'product_thumbnails'           => 'woocommerce_product_thumbnails',
+			'after_single_product_summary' => 'woocommerce_after_single_product_summary',
 		];
 		$hook     = isset( $hooks[ $position ] ) ? $hooks[ $position ] : $hooks['after_form'];
+		$priority = (int) get_option( 'kbpyxd_hook_priority', 20 );
 
-		add_action( $hook, [ self::class, 'render_button' ], 20 );
+		add_action( $hook, [ self::class, 'render_button' ], $priority );
 	}
 
 	/**
@@ -129,16 +140,119 @@ final class Frontend {
 			return;
 		}
 
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Markup is escaped when constructed.
+		echo self::get_button_markup(
+			self::get_flexible_id( self::$product ),
+			self::get_button_label()
+		);
+	}
+
+	/**
+	 * Render the visualizer button from a product-page shortcode.
+	 *
+	 * The current WooCommerce product SKU is used when the shortcode does not
+	 * provide a Flexible ID or SKU override.
+	 *
+	 * @param array|string $attributes Shortcode attributes.
+	 * @return string
+	 */
+	public static function render_shortcode( $attributes = [] ): string {
+		$product = self::get_current_product();
+
+		if ( ! $product instanceof WC_Product || 'yes' !== $product->get_meta( '_kbpyxd_enabled', true ) ) {
+			return '';
+		}
+
+		$company_id = trim( (string) get_option( 'kbpyxd_company_id', '' ) );
+
+		if ( '' === $company_id ) {
+			return '';
+		}
+
+		$attributes = shortcode_atts(
+			[
+				'flexible_id' => '',
+				'sku'         => '',
+				'label'       => '',
+			],
+			$attributes,
+			'pyxd_draping'
+		);
+
+		$flexible_id = trim( sanitize_text_field( (string) $attributes['flexible_id'] ) );
+
+		if ( '' === $flexible_id ) {
+			$flexible_id = trim( sanitize_text_field( (string) $attributes['sku'] ) );
+		}
+
+		if ( '' === $flexible_id ) {
+			$flexible_id = trim( (string) $product->get_sku() );
+		}
+
+		if ( '' === $flexible_id ) {
+			return '';
+		}
+
+		$label = trim( sanitize_text_field( (string) $attributes['label'] ) );
+
+		if ( '' === $label ) {
+			$label = self::get_button_label();
+		}
+
+		return self::get_button_markup( $flexible_id, $label );
+	}
+
+	/**
+	 * Get the configured button label.
+	 *
+	 * @return string
+	 */
+	private static function get_button_label(): string {
 		$label = trim( (string) get_option( 'kbpyxd_button_label', '' ) );
 
 		if ( '' === $label ) {
 			$label = __( 'See Custom Fabric Options', 'pyxd-draping-for-woocommerce' );
 		}
 
-		printf(
-			'<div class="kbpyxd-draping"><button type="button" class="button alt kbpyxd-draping__button" data-kbpyxd-open>%s</button><div class="kbpyxd-draping__status" data-kbpyxd-status role="status" aria-live="polite" hidden></div></div>',
+		return $label;
+	}
+
+	/**
+	 * Build escaped visualizer button markup.
+	 *
+	 * @param string $flexible_id Pyxd Flexible ID or product SKU.
+	 * @param string $label       Customer-facing button label.
+	 * @return string
+	 */
+	private static function get_button_markup( string $flexible_id, string $label ): string {
+		return sprintf(
+			'<div class="kbpyxd-draping"><button type="button" class="button alt kbpyxd-draping__button" data-kbpyxd-open data-kbpyxd-flexible-id="%1$s">%2$s</button><div class="kbpyxd-draping__status" data-kbpyxd-status role="status" aria-live="polite" hidden></div></div>',
+			esc_attr( $flexible_id ),
 			esc_html( $label )
 		);
+	}
+
+	/**
+	 * Get the current WooCommerce product object.
+	 *
+	 * @return WC_Product|null
+	 */
+	private static function get_current_product(): ?WC_Product {
+		global $product;
+
+		if ( is_product() ) {
+			$current_product = wc_get_product( get_queried_object_id() );
+
+			if ( $current_product instanceof WC_Product ) {
+				return $current_product;
+			}
+		}
+
+		if ( $product instanceof WC_Product ) {
+			return $product;
+		}
+
+		return null;
 	}
 
 	/**
@@ -157,4 +271,3 @@ final class Frontend {
 		return trim( (string) $product->get_sku() );
 	}
 }
-

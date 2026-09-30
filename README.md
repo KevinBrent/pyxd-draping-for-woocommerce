@@ -1,140 +1,136 @@
-=== Pyxd Draping for WooCommerce ===
-Contributors: kevinbrent
-Tags: woocommerce, furniture, fabric, visualizer, pyxd
-Requires at least: 6.4
-Tested up to: 6.8
-Requires PHP: 7.4
-Stable tag: 1.1.0
-License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
-
-Adds the Pyxd Draping fabric visualizer to selected WooCommerce products.
-
-== Description ==
+# Pyxd Draping for WooCommerce
 
 Pyxd Draping for WooCommerce adds Pyxd's modal fabric visualizer to selected WooCommerce product pages through standard WooCommerce hooks or a product-aware shortcode. It is a standalone plugin and requires only WordPress, WooCommerce, and an available Pyxd Draping account or sample configuration.
 
-= Requirements =
+## Requirements
 
-* WordPress 6.4 or newer
-* WooCommerce 8.0 or newer
-* PHP 7.4 or newer
-* A Pyxd Draping Company ID
-* A Pyxd Frame ID, SKU, or other Flexible ID for each enabled product
+- WordPress 6.4 or newer
+- WooCommerce 8.0 or newer
+- PHP 7.4 or newer
+- A Pyxd Draping Company ID
+- A Pyxd Frame ID, SKU, or other Flexible ID for each enabled product
 
-== Installation ==
+## Installation
 
-1. Upload the `pyxd-draping-for-woocommerce` directory to `wp-content/plugins/`, or install the plugin ZIP through Plugins > Add Plugin > Upload Plugin.
-2. Activate Pyxd Draping for WooCommerce.
-3. Open WooCommerce > Settings > Products > Pyxd Draping.
+1. Upload the `pyxd-draping-for-woocommerce` directory to `wp-content/plugins/`, or install the plugin ZIP through **Plugins > Add Plugin > Upload Plugin**.
+2. Activate **Pyxd Draping for WooCommerce**.
+3. Open **WooCommerce > Settings > Products > Pyxd Draping**.
 4. Enter the Company ID supplied by Pyxd and configure the global display settings.
 5. Edit each eligible WooCommerce product and complete the product setup described below.
 
 WooCommerce must be installed and active. The plugin displays an administrator notice and does not initialize its integration when WooCommerce is unavailable.
 
-== Global Settings ==
+## Global settings
 
-Open WooCommerce > Settings > Products > Pyxd Draping.
+Open **WooCommerce > Settings > Products > Pyxd Draping**.
 
-= Company ID =
+### Company ID
 
 Enter the Draping Client ID supplied by Pyxd. The plugin uses this value as the `data-company-id` attribute when it loads the Pyxd SDK from `https://js.pyxmagic.com/build/draping.js`.
 
 The visualizer is not rendered when the Company ID is empty.
 
-= Button label =
+### Button label
 
-Controls the customer-facing text of the visualizer button. The default label is "See Custom Fabric Options."
+Controls the customer-facing text of the visualizer button. The default label is **See Custom Fabric Options**.
 
-= Button position =
+### Button position
 
 Selects the WooCommerce action hook used to render the button.
 
-* Before add-to-cart form: `woocommerce_before_add_to_cart_form`
-* After add-to-cart button: `woocommerce_after_add_to_cart_button`
-* After add-to-cart form: `woocommerce_after_add_to_cart_form`
-* Single product summary: `woocommerce_single_product_summary`
-* Product meta start: `woocommerce_product_meta_start`
-* Product meta end: `woocommerce_product_meta_end`
-* Product thumbnails: `woocommerce_product_thumbnails`
-* After single product summary: `woocommerce_after_single_product_summary`
-* Shortcode only (no automatic output): `[pyxd_draping]`
+| Setting | WooCommerce action hook |
+| --- | --- |
+| Before add-to-cart form | `woocommerce_before_add_to_cart_form` |
+| After add-to-cart button | `woocommerce_after_add_to_cart_button` |
+| After add-to-cart form | `woocommerce_after_add_to_cart_form` |
+| Single product summary | `woocommerce_single_product_summary` |
+| Product meta start | `woocommerce_product_meta_start` |
+| Product meta end | `woocommerce_product_meta_end` |
+| Product thumbnails | `woocommerce_product_thumbnails` |
+| After single product summary | `woocommerce_after_single_product_summary` |
+| Shortcode only (no automatic output) | `[pyxd_draping]` |
 
-The default position is After add-to-cart form. A theme must execute the selected WooCommerce hook for the button to appear. Theme overrides can change the visual result of a hook, especially the product-thumbnail and after-summary positions.
+The default position is **After add-to-cart form**. A theme must execute the selected WooCommerce hook for the button to appear. Theme overrides can change the visual result of a hook, especially the product-thumbnail and after-summary positions.
 
-Select Shortcode only (no automatic output) when placing the button manually with the shortcode. This prevents the plugin from also adding the button through a WooCommerce action hook.
+Select **Shortcode only (no automatic output)** when placing the button manually with the shortcode. This prevents the plugin from also adding the button through a WooCommerce action hook.
 
-= Action hook priority =
+### Action hook priority
 
 Controls when the plugin's button callback runs relative to other callbacks registered on the selected WooCommerce action hook.
 
-* Default: `20`
-* Minimum: `-9999`
-* Maximum: `9999`
-* Whole numbers only
+- Default: `20`
+- Minimum: `-9999`
+- Maximum: `9999`
+- Whole numbers only
 
 A lower number runs earlier. A higher number runs later. Callbacks registered on the same hook with the same priority run in registration order.
 
 Priority does not affect shortcode output.
 
-= Hover preview =
+### Hover preview
 
 Controls Pyxd's `hoverPreview` modal option. When enabled, Pyxd can preview a swatch while the customer points to it. This setting is enabled by default.
 
-= Preload visualizer =
+### Preload visualizer
 
 When enabled, the plugin begins looking up and preloading the current product's Pyxd assets after the product page is ready. This reduces the time between clicking the button and opening the modal. The plugin also attempts to preload when the customer first points to or focuses the button.
 
 Preloading is enabled by default. Disabling it delays SDK and product loading until customer interaction.
 
-== Product Setup ==
+## Product setup
 
-1. Open Products in WordPress administration.
+1. Open **Products** in WordPress administration.
 2. Edit the product that should display the visualizer.
-3. In Product data > General, enable Pyxd Draping.
-4. Enter a Pyxd Flexible ID.
+3. In **Product data > General**, enable **Pyxd Draping**.
+4. Enter a **Pyxd Flexible ID**.
 5. Update the product.
 
 The Flexible ID may be a Pyxd Frame ID or another product identifier mapped by Pyxd. If the field is empty, the plugin uses the WooCommerce product SKU. The visualizer is not rendered when both the Flexible ID and product SKU are empty.
 
-The global Company ID and product-level Pyxd Draping checkbox must both be configured before the button appears.
+The global Company ID and product-level **Pyxd Draping** checkbox must both be configured before the button appears.
 
-== Shortcode ==
+## Shortcode
 
 Add the following shortcode to content rendered on an enabled WooCommerce product page:
 
-`[pyxd_draping]`
+```text
+[pyxd_draping]
+```
 
 With no attributes, the shortcode gets the SKU directly from the current WooCommerce product object and uses the globally configured button label.
 
 The shortcode supports these optional attributes:
 
-* `flexible_id`: Explicit Pyxd Flexible ID. This takes precedence over every other identifier.
-* `sku`: Explicit SKU or other SKU-based Pyxd identifier. Used when `flexible_id` is empty.
-* `label`: Button label for this shortcode instance. Falls back to the global Button label setting.
+| Attribute | Description |
+| --- | --- |
+| `flexible_id` | Explicit Pyxd Flexible ID. This takes precedence over every other identifier. |
+| `sku` | Explicit SKU or other SKU-based Pyxd identifier. Used when `flexible_id` is empty. |
+| `label` | Button label for this shortcode instance. Falls back to the global Button label setting. |
 
 Examples:
 
-* `[pyxd_draping label="View Fabric Options"]`
-* `[pyxd_draping sku="CHAIR-100"]`
-* `[pyxd_draping flexible_id="ytYfMXKY9UJd9" label="Customize This Product"]`
+```text
+[pyxd_draping label="View Fabric Options"]
+[pyxd_draping sku="CHAIR-100"]
+[pyxd_draping flexible_id="ytYfMXKY9UJd9" label="Customize This Product"]
+```
 
 Identifier precedence is `flexible_id`, then `sku`, then the current product object's SKU. The product-level Pyxd Flexible ID field is used by automatically hooked buttons but is intentionally not the shortcode's default.
 
 The shortcode returns no markup unless it is rendered with a current WooCommerce product, Pyxd Draping is enabled on that product, a global Company ID is configured, and an identifier can be resolved.
 
-== Testing with Pyxd Sample Data ==
+## Testing with Pyxd's sample data
 
 The Pyxd integration guide provides the following values specifically for testing:
 
-* Sample Company ID: `EOwcft9LfSuxN`
-* Sample Frame/Flexible ID: `ytYfMXKY9UJd9`
+- Sample Company ID: `EOwcft9LfSuxN`
+- Sample Frame/Flexible ID: `ytYfMXKY9UJd9`
 
 Enter the sample Company ID in the global settings and the sample Frame ID on an enabled product. Test from a normal HTTP or HTTPS WordPress environment; the Pyxd API cannot be tested directly from a `file://` URL.
 
 Production stores should use the Company ID and product mappings supplied for that store by Pyxd.
 
-== Storefront Behavior ==
+## Storefront behavior
 
 On an eligible product page, the plugin:
 
@@ -148,65 +144,77 @@ On an eligible product page, the plugin:
 
 The plugin does not change the WooCommerce product, variation, SKU, price, cart item, or order when a customer selects a swatch.
 
-== JavaScript Selection Event ==
+## JavaScript selection event
 
 After the Pyxd modal closes successfully, the plugin dispatches `kbpyxdDrapingSelection` on `document`. The event's `detail` property contains the result returned by `window.pyxdDraping.showModal()`, including the frame ID, output string when available, and configuration object.
 
-    document.addEventListener( 'kbpyxdDrapingSelection', function ( event ) {
-        console.log( event.detail );
-    } );
+```js
+document.addEventListener( 'kbpyxdDrapingSelection', function ( event ) {
+	console.log( event.detail );
+} );
+```
 
 Custom cart or order behavior should listen for this event and implement the store's approved SKU, pricing, and configuration rules. Do not assume that every Pyxd output string maps to a WooCommerce product or variation.
 
-== Frequently Asked Questions ==
+## Troubleshooting
 
-= The button does not appear. =
+### The button does not appear
 
 Verify all of the following:
 
-* WooCommerce is active.
-* The global Company ID is not empty.
-* Pyxd Draping is enabled on the product.
-* The product has a Flexible ID or a WooCommerce SKU.
-* The active theme executes the selected WooCommerce action hook.
-* The product page is a standard WooCommerce single-product request.
+- WooCommerce is active.
+- The global Company ID is not empty.
+- **Pyxd Draping** is enabled on the product.
+- The product has a Flexible ID or a WooCommerce SKU.
+- The active theme executes the selected WooCommerce action hook.
+- The product page is a standard WooCommerce single-product request.
 
-= The visualizer cannot find the product. =
+### The visualizer cannot find the product
 
 Confirm that the product's Flexible ID or fallback SKU exists in the Pyxd customer data and is mapped to the configured Company ID.
 
-= The SDK does not load. =
+### The SDK does not load
 
 Confirm that the site and its security policy allow HTTPS requests to:
 
-* `https://js.pyxmagic.com/`
-* `https://draping.pyxmagic.com/`
+- `https://js.pyxmagic.com/`
+- `https://draping.pyxmagic.com/`
 
 The plugin refuses to reuse a Pyxd SDK script that declares a different Company ID because a page can have only one active Pyxd client configuration.
 
-= The position or priority has no visible effect. =
+### The position or priority has no visible effect
 
 WooCommerce hooks are controlled by the active theme's product templates. Confirm that the selected hook exists in the theme override and check whether theme CSS moves, hides, or restyles content in that area. Priority only controls order among callbacks on the same hook; it does not move content between hooks.
 
-== Uninstall ==
+## Uninstall behavior
 
 Uninstalling the plugin deletes its global WooCommerce settings. Product-level enablement and Flexible ID metadata are retained so products do not need to be remapped after a reinstall.
 
-== Additional Documentation ==
+## Documentation
 
-* [Pyxd Draping Integration Guide](https://docs.google.com/document/d/15ko7qpLgOac2HcH2VDtqavZorJR7lwMged2hGTPItnI/edit)
+- [Pyxd Draping Integration Guide](https://docs.google.com/document/d/15ko7qpLgOac2HcH2VDtqavZorJR7lwMged2hGTPItnI/edit)
 
-== Changelog ==
+## Changelog
 
-= 1.1.0 =
-* Added additional WooCommerce action hook positions.
-* Added configurable action hook priority.
-* Added the `[pyxd_draping]` product-page shortcode.
-* Added shortcode-specific Flexible ID, SKU, and button label overrides.
-* Added comprehensive installation, configuration, integration, and troubleshooting documentation.
+### 1.1.0
 
-= 1.0.0 =
-* Added the Pyxd modal visualizer to enabled WooCommerce products.
-* Added global display, hover-preview, and preload settings.
-* Added product-level enablement and Flexible ID fields with SKU fallback.
-* Added the `kbpyxdDrapingSelection` browser event.
+- Added additional WooCommerce action hook positions.
+- Added configurable action hook priority.
+- Added the `[pyxd_draping]` product-page shortcode.
+- Added shortcode-specific Flexible ID, SKU, and button label overrides.
+- Added comprehensive installation, configuration, integration, and troubleshooting documentation.
+
+### 1.0.0
+
+- Added the Pyxd modal visualizer to enabled WooCommerce products.
+- Added global display, hover-preview, and preload settings.
+- Added product-level enablement and Flexible ID fields with SKU fallback.
+- Added the `kbpyxdDrapingSelection` browser event.
+
+## License
+
+GPL-2.0-or-later.
+
+## Author
+
+Kevin Brent

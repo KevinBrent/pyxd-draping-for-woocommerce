@@ -4,7 +4,7 @@
 	const config = window.kbPyxdDrapingConfig || {};
 	const scriptId = 'kbpyxd-draping-sdk';
 	let sdkPromise = null;
-	let preloadPromise = null;
+	const preloadPromises = new Map();
 
 	function hasApi() {
 		return Boolean( window.pyxdDraping && typeof window.pyxdDraping.showModal === 'function' );
@@ -79,17 +79,21 @@
 		return sdkPromise;
 	}
 
-	function preload() {
-		if ( preloadPromise ) {
-			return preloadPromise;
+	function preload( flexibleId ) {
+		if ( ! flexibleId ) {
+			return Promise.reject( new Error( 'A Pyxd Draping Flexible ID is required.' ) );
 		}
 
-		preloadPromise = loadSdk().then( function ( api ) {
+		if ( preloadPromises.has( flexibleId ) ) {
+			return preloadPromises.get( flexibleId );
+		}
+
+		const preloadPromise = loadSdk().then( function ( api ) {
 			if ( typeof api.lookup !== 'function' ) {
 				return api;
 			}
 
-			return api.lookup( config.flexibleId ).then( function ( frameId ) {
+			return api.lookup( flexibleId ).then( function ( frameId ) {
 				if ( ! frameId ) {
 					throw new Error( 'Pyxd Draping frame was not found.' );
 				}
@@ -101,13 +105,15 @@
 				return api;
 			}
 
-			return api.preload( config.flexibleId ).then( function () {
+			return api.preload( flexibleId ).then( function () {
 				return api;
 			} );
 		} ).catch( function ( error ) {
-			preloadPromise = null;
+			preloadPromises.delete( flexibleId );
 			throw error;
 		} );
+
+		preloadPromises.set( flexibleId, preloadPromise );
 
 		return preloadPromise;
 	}
@@ -131,15 +137,16 @@
 	function openModal( button ) {
 		const wrapper = button.closest( '.kbpyxd-draping' );
 		const originalLabel = button.textContent;
+		const flexibleId = button.dataset.kbpyxdFlexibleId || config.flexibleId;
 
 		button.disabled = true;
 		button.textContent = config.i18n.loading;
 		button.setAttribute( 'aria-busy', 'true' );
 		setStatus( wrapper, '', false );
 
-		preload().then( function ( api ) {
+		preload( flexibleId ).then( function ( api ) {
 			return api.showModal(
-				config.flexibleId,
+				flexibleId,
 				undefined,
 				{ hoverPreview: Boolean( config.hoverPreview ) }
 			);
@@ -168,23 +175,25 @@
 	} );
 
 	function preloadOnInteraction( event ) {
-		if ( event.target.closest( '[data-kbpyxd-open]' ) ) {
+		const button = event.target.closest( '[data-kbpyxd-open]' );
+
+		if ( button ) {
 			document.removeEventListener( 'pointerover', preloadOnInteraction );
 			document.removeEventListener( 'focusin', preloadOnInteraction );
-			preload().catch( function () {} );
+			preload( button.dataset.kbpyxdFlexibleId || config.flexibleId ).catch( function () {} );
 		}
 	}
 
 	document.addEventListener( 'pointerover', preloadOnInteraction );
 	document.addEventListener( 'focusin', preloadOnInteraction );
 
-	if ( config.preload ) {
+	if ( config.preload && config.flexibleId ) {
 		if ( document.readyState === 'loading' ) {
 			document.addEventListener( 'DOMContentLoaded', function () {
-				preload().catch( function () {} );
+				preload( config.flexibleId ).catch( function () {} );
 			}, { once: true } );
 		} else {
-			preload().catch( function () {} );
+			preload( config.flexibleId ).catch( function () {} );
 		}
 	}
 }() );
