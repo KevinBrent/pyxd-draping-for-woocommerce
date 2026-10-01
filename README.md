@@ -1,6 +1,6 @@
 # Pyxd Draping for WooCommerce
 
-Pyxd Draping for WooCommerce adds Pyxd's modal fabric visualizer to selected WooCommerce product pages through standard WooCommerce hooks or a product-aware shortcode. It is a standalone plugin and requires only WordPress, WooCommerce, and an available Pyxd Draping account or sample configuration.
+Pyxd Draping for WooCommerce adds Pyxd's modal fabric visualizer to eligible WooCommerce product pages through standard WooCommerce hooks or a product-aware shortcode. Products display the visualizer by default and can be individually disabled. It is a standalone plugin and requires only WordPress, WooCommerce, and an available Pyxd Draping account or sample configuration.
 
 ## Requirements
 
@@ -8,7 +8,7 @@ Pyxd Draping for WooCommerce adds Pyxd's modal fabric visualizer to selected Woo
 - WooCommerce 8.0 or newer
 - PHP 7.4 or newer
 - A Pyxd Draping Company ID
-- A Pyxd Frame ID, SKU, or other Flexible ID for each enabled product
+- A Pyxd Frame ID, SKU, or other Flexible ID for each product that should display the visualizer
 
 ## Installation
 
@@ -16,7 +16,7 @@ Pyxd Draping for WooCommerce adds Pyxd's modal fabric visualizer to selected Woo
 2. Activate **Pyxd Draping for WooCommerce**.
 3. Open **WooCommerce > Settings > Products > Pyxd Draping**.
 4. Enter the Company ID supplied by Pyxd and configure the global display settings.
-5. Edit each eligible WooCommerce product and complete the product setup described below.
+5. Edit products that need a Flexible ID override or should have Pyxd Draping disabled.
 
 WooCommerce must be installed and active. The plugin displays an administrator notice and does not initialize its integration when WooCommerce is unavailable.
 
@@ -80,18 +80,18 @@ Preloading is enabled by default. Disabling it delays SDK and product loading un
 ## Product setup
 
 1. Open **Products** in WordPress administration.
-2. Edit the product that should display the visualizer.
-3. In **Product data > General**, enable **Pyxd Draping**.
-4. Enter a **Pyxd Flexible ID**.
+2. Edit the product.
+3. In **Product data > General**, enter a **Pyxd Flexible ID** when the WooCommerce SKU is not the identifier mapped by Pyxd.
+4. Leave **Disable Pyxd Draping** unchecked to show the visualizer, or check it to hide the visualizer for this product.
 5. Update the product.
 
 The Flexible ID may be a Pyxd Frame ID or another product identifier mapped by Pyxd. If the field is empty, the plugin uses the WooCommerce product SKU. The visualizer is not rendered when both the Flexible ID and product SKU are empty.
 
-The global Company ID and product-level **Pyxd Draping** checkbox must both be configured before the button appears.
+The visualizer is enabled by default. A configured global Company ID and a product Flexible ID or SKU are required before the button appears. The product-level **Disable Pyxd Draping** checkbox is an explicit opt-out.
 
 ## Shortcode
 
-Add the following shortcode to content rendered on an enabled WooCommerce product page:
+Add the following shortcode to content rendered on a WooCommerce product page that has not been disabled:
 
 ```text
 [pyxd_draping]
@@ -117,7 +117,7 @@ Examples:
 
 Identifier precedence is `flexible_id`, then `sku`, then the current product object's SKU. The product-level Pyxd Flexible ID field is used by automatically hooked buttons but is intentionally not the shortcode's default.
 
-The shortcode returns no markup unless it is rendered with a current WooCommerce product, Pyxd Draping is enabled on that product, a global Company ID is configured, and an identifier can be resolved.
+The shortcode returns no markup unless it is rendered with a current WooCommerce product, Pyxd Draping has not been disabled on that product, a global Company ID is configured, and an identifier can be resolved.
 
 ## Testing with Pyxd's sample data
 
@@ -126,7 +126,7 @@ The Pyxd integration guide provides the following values specifically for testin
 - Sample Company ID: `EOwcft9LfSuxN`
 - Sample Frame/Flexible ID: `ytYfMXKY9UJd9`
 
-Enter the sample Company ID in the global settings and the sample Frame ID on an enabled product. Test from a normal HTTP or HTTPS WordPress environment; the Pyxd API cannot be tested directly from a `file://` URL.
+Enter the sample Company ID in the global settings and the sample Frame ID on a product that has not been disabled. Test from a normal HTTP or HTTPS WordPress environment; the Pyxd API cannot be tested directly from a `file://` URL.
 
 Production stores should use the Company ID and product mappings supplied for that store by Pyxd.
 
@@ -164,7 +164,7 @@ Verify all of the following:
 
 - WooCommerce is active.
 - The global Company ID is not empty.
-- **Pyxd Draping** is enabled on the product.
+- **Disable Pyxd Draping** is not selected on the product.
 - The product has a Flexible ID or a WooCommerce SKU.
 - The active theme executes the selected WooCommerce action hook.
 - The product page is a standard WooCommerce single-product request.
@@ -188,7 +188,7 @@ WooCommerce hooks are controlled by the active theme's product templates. Confir
 
 ## Uninstall behavior
 
-Uninstalling the plugin deletes its global WooCommerce settings. Product-level enablement and Flexible ID metadata are retained so products do not need to be remapped after a reinstall.
+Uninstalling the plugin deletes its global WooCommerce settings. Product-level disable state and Flexible ID metadata are retained so products do not need to be remapped after a reinstall.
 
 ## Documentation
 

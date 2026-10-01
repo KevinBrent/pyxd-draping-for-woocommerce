@@ -145,9 +145,9 @@ final class Admin {
 
 		woocommerce_wp_checkbox(
 			[
-				'id'          => '_kbpyxd_enabled',
-				'label'       => __( 'Pyxd Draping', 'pyxd-draping-for-woocommerce' ),
-				'description' => __( 'Show the fabric visualizer for this product.', 'pyxd-draping-for-woocommerce' ),
+				'id'          => '_kbpyxd_disabled',
+				'label'       => __( 'Disable Pyxd Draping', 'pyxd-draping-for-woocommerce' ),
+				'description' => __( 'Hide the fabric visualizer for this product.', 'pyxd-draping-for-woocommerce' ),
 			]
 		);
 
@@ -170,12 +170,13 @@ final class Admin {
 	 * @return void
 	 */
 	public static function save_product_fields( WC_Product $product ): void {
-		$enabled     = isset( $_POST['_kbpyxd_enabled'] ) ? 'yes' : 'no';
+		$disabled    = isset( $_POST['_kbpyxd_disabled'] ) ? 'yes' : 'no';
 		$flexible_id = isset( $_POST['_kbpyxd_flexible_id'] )
 			? sanitize_text_field( wp_unslash( $_POST['_kbpyxd_flexible_id'] ) )
 			: '';
 
-		$product->update_meta_data( '_kbpyxd_enabled', $enabled );
+		$product->update_meta_data( '_kbpyxd_disabled', $disabled );
+		$product->delete_meta_data( '_kbpyxd_enabled' );
 		$product->update_meta_data( '_kbpyxd_flexible_id', $flexible_id );
 	}
 

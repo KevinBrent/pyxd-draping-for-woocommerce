@@ -48,7 +48,7 @@ final class Frontend {
 
 		$product = wc_get_product( get_queried_object_id() );
 
-		if ( ! $product instanceof WC_Product || 'yes' !== $product->get_meta( '_kbpyxd_enabled', true ) ) {
+		if ( ! $product instanceof WC_Product || self::is_product_disabled( $product ) ) {
 			return;
 		}
 
@@ -159,7 +159,7 @@ final class Frontend {
 	public static function render_shortcode( $attributes = [] ): string {
 		$product = self::get_current_product();
 
-		if ( ! $product instanceof WC_Product || 'yes' !== $product->get_meta( '_kbpyxd_enabled', true ) ) {
+		if ( ! $product instanceof WC_Product || self::is_product_disabled( $product ) ) {
 			return '';
 		}
 
@@ -253,6 +253,19 @@ final class Frontend {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Determine whether Pyxd Draping is disabled for a product.
+	 *
+	 * Products display the visualizer by default and must be explicitly opted
+	 * out with the product-level disable setting.
+	 *
+	 * @param WC_Product $product Product object.
+	 * @return bool
+	 */
+	private static function is_product_disabled( WC_Product $product ): bool {
+		return 'yes' === $product->get_meta( '_kbpyxd_disabled', true );
 	}
 
 	/**
