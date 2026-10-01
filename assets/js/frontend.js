@@ -3,6 +3,8 @@
 
 	const config = window.kbPyxdDrapingConfig || {};
 	const scriptId = 'kbpyxd-draping-sdk';
+	const availabilityCachePrefix = 'kbpyxd-draping-availability:';
+	const availabilityCacheLifetime = 24 * 60 * 60 * 1000;
 	let sdkPromise = null;
 	const availabilityPromises = new Map();
 	const preloadPromises = new Map();
@@ -80,9 +82,54 @@
 		return sdkPromise;
 	}
 
+	function getAvailabilityCacheKey( flexibleId ) {
+		return availabilityCachePrefix + config.companyId + ':' + flexibleId;
+	}
+
+	function getCachedAvailability( flexibleId ) {
+		try {
+			const cached = JSON.parse( window.localStorage.getItem( getAvailabilityCacheKey( flexibleId ) ) );
+
+			if (
+				cached &&
+				typeof cached.available === 'boolean' &&
+				typeof cached.expiresAt === 'number' &&
+				cached.expiresAt > Date.now()
+			) {
+				return cached.available;
+			}
+
+			window.localStorage.removeItem( getAvailabilityCacheKey( flexibleId ) );
+		} catch ( error ) {
+			return null;
+		}
+
+		return null;
+	}
+
+	function cacheAvailability( flexibleId, available ) {
+		try {
+			window.localStorage.setItem(
+				getAvailabilityCacheKey( flexibleId ),
+				JSON.stringify( {
+					available: available,
+					expiresAt: Date.now() + availabilityCacheLifetime,
+				} )
+			);
+		} catch ( error ) {
+			// Continue without caching when browser storage is unavailable.
+		}
+	}
+
 	function checkAvailability( flexibleId ) {
 		if ( ! flexibleId ) {
 			return Promise.reject( new Error( 'A Pyxd Draping Flexible ID is required.' ) );
+		}
+
+		const cachedAvailability = getCachedAvailability( flexibleId );
+
+		if ( null !== cachedAvailability ) {
+			return Promise.resolve( { api: null, available: cachedAvailability } );
 		}
 
 		if ( availabilityPromises.has( flexibleId ) ) {
@@ -95,7 +142,11 @@
 			}
 
 			return api.lookup( flexibleId ).then( function ( frameId ) {
-				return { api: api, available: Boolean( frameId ) };
+				const available = Boolean( frameId );
+
+				cacheAvailability( flexibleId, available );
+
+				return { api: api, available: available };
 			} );
 		} ).catch( function ( error ) {
 			availabilityPromises.delete( flexibleId );
@@ -117,7 +168,15 @@
 				return null;
 			}
 
-			const api = availability.api;
+			if ( availability.api ) {
+				return availability.api;
+			}
+
+			return loadSdk();
+		} ).then( function ( api ) {
+			if ( ! api ) {
+				return null;
+			}
 
 			if ( typeof api.preload !== 'function' ) {
 				return api;
