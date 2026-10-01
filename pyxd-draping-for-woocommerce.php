@@ -3,7 +3,7 @@
  * Plugin Name: Pyxd Draping for WooCommerce
  * Plugin URI:  https://kevinbrent.com/
  * Description: Adds the Pyxd Draping fabric visualizer to eligible WooCommerce products.
- * Version:     1.1.0
+ * Version:     1.1.1
  * Author:      Kevin Brent
  * License:     GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'KBPYXD_VERSION', '1.1.0' );
+define( 'KBPYXD_VERSION', '1.1.1' );
 define( 'KBPYXD_PLUGIN_FILE', __FILE__ );
 define( 'KBPYXD_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'KBPYXD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );

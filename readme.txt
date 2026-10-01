@@ -4,7 +4,7 @@ Tags: woocommerce, furniture, fabric, visualizer, pyxd
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -197,6 +197,9 @@ Uninstalling the plugin deletes its global WooCommerce settings. Product-level d
 * [Pyxd Draping Integration Guide](https://docs.google.com/document/d/15ko7qpLgOac2HcH2VDtqavZorJR7lwMged2hGTPItnI/edit)
 
 == Changelog ==
+
+= 1.1.1 =
+* Changed product behavior so the visualizer displays by default and can be explicitly disabled.
 
 = 1.1.0 =
 * Added additional WooCommerce action hook positions.

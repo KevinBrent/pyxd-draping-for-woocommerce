@@ -196,6 +196,10 @@ Uninstalling the plugin deletes its global WooCommerce settings. Product-level d
 
 ## Changelog
 
+### 1.1.1
+
+- Changed product behavior so the visualizer displays by default and can be explicitly disabled.
+
 ### 1.1.0
 
 - Added additional WooCommerce action hook positions.
