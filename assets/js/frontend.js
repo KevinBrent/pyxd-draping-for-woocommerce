@@ -4,6 +4,7 @@
 	const config = window.kbPyxdDrapingConfig || {};
 	const scriptId = 'kbpyxd-draping-sdk';
 	let sdkPromise = null;
+	const availabilityPromises = new Map();
 	const preloadPromises = new Map();
 
 	function hasApi() {
@@ -79,28 +80,45 @@
 		return sdkPromise;
 	}
 
-	function preload( flexibleId ) {
+	function checkAvailability( flexibleId ) {
 		if ( ! flexibleId ) {
 			return Promise.reject( new Error( 'A Pyxd Draping Flexible ID is required.' ) );
 		}
 
+		if ( availabilityPromises.has( flexibleId ) ) {
+			return availabilityPromises.get( flexibleId );
+		}
+
+		const availabilityPromise = loadSdk().then( function ( api ) {
+			if ( typeof api.lookup !== 'function' ) {
+				return { api: api, available: true };
+			}
+
+			return api.lookup( flexibleId ).then( function ( frameId ) {
+				return { api: api, available: Boolean( frameId ) };
+			} );
+		} ).catch( function ( error ) {
+			availabilityPromises.delete( flexibleId );
+			throw error;
+		} );
+
+		availabilityPromises.set( flexibleId, availabilityPromise );
+
+		return availabilityPromise;
+	}
+
+	function preload( flexibleId ) {
 		if ( preloadPromises.has( flexibleId ) ) {
 			return preloadPromises.get( flexibleId );
 		}
 
-		const preloadPromise = loadSdk().then( function ( api ) {
-			if ( typeof api.lookup !== 'function' ) {
-				return api;
+		const preloadPromise = checkAvailability( flexibleId ).then( function ( availability ) {
+			if ( ! availability.available ) {
+				return null;
 			}
 
-			return api.lookup( flexibleId ).then( function ( frameId ) {
-				if ( ! frameId ) {
-					throw new Error( 'Pyxd Draping frame was not found.' );
-				}
+			const api = availability.api;
 
-				return api;
-			} );
-		} ).then( function ( api ) {
 			if ( typeof api.preload !== 'function' ) {
 				return api;
 			}
@@ -116,6 +134,30 @@
 		preloadPromises.set( flexibleId, preloadPromise );
 
 		return preloadPromise;
+	}
+
+	function setButtonVisibility( button, visible ) {
+		const wrapper = button.closest( '.kbpyxd-draping' );
+
+		if ( wrapper ) {
+			wrapper.hidden = ! visible;
+		}
+	}
+
+	function verifyButton( button ) {
+		const flexibleId = button.dataset.kbpyxdFlexibleId || config.flexibleId;
+
+		setButtonVisibility( button, false );
+
+		checkAvailability( flexibleId ).then( function ( availability ) {
+			setButtonVisibility( button, availability.available );
+
+			if ( availability.available && config.preload ) {
+				preload( flexibleId ).catch( function () {} );
+			}
+		} ).catch( function () {
+			setButtonVisibility( button, true );
+		} );
 	}
 
 	function setStatus( wrapper, message, isError ) {
@@ -145,20 +187,28 @@
 		setStatus( wrapper, '', false );
 
 		preload( flexibleId ).then( function ( api ) {
+			if ( ! api ) {
+				setButtonVisibility( button, false );
+				return null;
+			}
+
 			return api.showModal(
 				flexibleId,
 				undefined,
 				{ hoverPreview: Boolean( config.hoverPreview ) }
 			);
 		} ).then( function ( result ) {
+			if ( null === result ) {
+				return;
+			}
+
 			if ( result && result.outputString ) {
 				setStatus( wrapper, selectedMessage( result.outputString ), false );
 			}
 
 			document.dispatchEvent( new CustomEvent( 'kbpyxdDrapingSelection', { detail: result } ) );
-		} ).catch( function ( error ) {
-			const unavailable = error && /not found/i.test( error.message );
-			setStatus( wrapper, unavailable ? config.i18n.unavailable : config.i18n.loadError, true );
+		} ).catch( function () {
+			setStatus( wrapper, config.i18n.loadError, true );
 		} ).finally( function () {
 			button.disabled = false;
 			button.textContent = originalLabel;
@@ -187,13 +237,13 @@
 	document.addEventListener( 'pointerover', preloadOnInteraction );
 	document.addEventListener( 'focusin', preloadOnInteraction );
 
-	if ( config.preload && config.flexibleId ) {
-		if ( document.readyState === 'loading' ) {
-			document.addEventListener( 'DOMContentLoaded', function () {
-				preload( config.flexibleId ).catch( function () {} );
-			}, { once: true } );
-		} else {
-			preload( config.flexibleId ).catch( function () {} );
-		}
+	function verifyButtons() {
+		document.querySelectorAll( '[data-kbpyxd-open]' ).forEach( verifyButton );
+	}
+
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', verifyButtons, { once: true } );
+	} else {
+		verifyButtons();
 	}
 }() );
