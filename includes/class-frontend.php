@@ -116,10 +116,9 @@ final class Frontend {
 			'preload'      => 'yes' === get_option( 'kbpyxd_preload', 'yes' ),
 			'sdkUrl'       => 'https://js.pyxmagic.com/build/draping.js',
 			'i18n'         => [
-				'loading'     => __( 'Loading…', 'pyxd-draping-for-woocommerce' ),
-				'loadError'   => __( 'Unable to open the fabric visualizer. Please try again.', 'pyxd-draping-for-woocommerce' ),
-				'unavailable' => __( 'Fabric options are not available for this product.', 'pyxd-draping-for-woocommerce' ),
-				'selected'    => __( 'Selected option: %s', 'pyxd-draping-for-woocommerce' ),
+				'loading'   => __( 'Loading…', 'pyxd-draping-for-woocommerce' ),
+				'loadError' => __( 'Unable to open the fabric visualizer. Please try again.', 'pyxd-draping-for-woocommerce' ),
+				'selected'  => __( 'Selected option: %s', 'pyxd-draping-for-woocommerce' ),
 			],
 		];
 

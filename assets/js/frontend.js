@@ -3,7 +3,10 @@
 
 	const config = window.kbPyxdDrapingConfig || {};
 	const scriptId = 'kbpyxd-draping-sdk';
+	const availabilityCachePrefix = 'kbpyxd-draping-availability:';
+	const availabilityCacheLifetime = 24 * 60 * 60 * 1000;
 	let sdkPromise = null;
+	const availabilityPromises = new Map();
 	const preloadPromises = new Map();
 
 	function hasApi() {
@@ -79,28 +82,102 @@
 		return sdkPromise;
 	}
 
-	function preload( flexibleId ) {
+	function getAvailabilityCacheKey( flexibleId ) {
+		return availabilityCachePrefix + config.companyId + ':' + flexibleId;
+	}
+
+	function getCachedAvailability( flexibleId ) {
+		try {
+			const cached = JSON.parse( window.localStorage.getItem( getAvailabilityCacheKey( flexibleId ) ) );
+
+			if (
+				cached &&
+				typeof cached.available === 'boolean' &&
+				typeof cached.expiresAt === 'number' &&
+				cached.expiresAt > Date.now()
+			) {
+				return cached.available;
+			}
+
+			window.localStorage.removeItem( getAvailabilityCacheKey( flexibleId ) );
+		} catch ( error ) {
+			return null;
+		}
+
+		return null;
+	}
+
+	function cacheAvailability( flexibleId, available ) {
+		try {
+			window.localStorage.setItem(
+				getAvailabilityCacheKey( flexibleId ),
+				JSON.stringify( {
+					available: available,
+					expiresAt: Date.now() + availabilityCacheLifetime,
+				} )
+			);
+		} catch ( error ) {
+			// Continue without caching when browser storage is unavailable.
+		}
+	}
+
+	function checkAvailability( flexibleId ) {
 		if ( ! flexibleId ) {
 			return Promise.reject( new Error( 'A Pyxd Draping Flexible ID is required.' ) );
 		}
 
+		const cachedAvailability = getCachedAvailability( flexibleId );
+
+		if ( null !== cachedAvailability ) {
+			return Promise.resolve( { api: null, available: cachedAvailability } );
+		}
+
+		if ( availabilityPromises.has( flexibleId ) ) {
+			return availabilityPromises.get( flexibleId );
+		}
+
+		const availabilityPromise = loadSdk().then( function ( api ) {
+			if ( typeof api.lookup !== 'function' ) {
+				return { api: api, available: true };
+			}
+
+			return api.lookup( flexibleId ).then( function ( frameId ) {
+				const available = Boolean( frameId );
+
+				cacheAvailability( flexibleId, available );
+
+				return { api: api, available: available };
+			} );
+		} ).catch( function ( error ) {
+			availabilityPromises.delete( flexibleId );
+			throw error;
+		} );
+
+		availabilityPromises.set( flexibleId, availabilityPromise );
+
+		return availabilityPromise;
+	}
+
+	function preload( flexibleId ) {
 		if ( preloadPromises.has( flexibleId ) ) {
 			return preloadPromises.get( flexibleId );
 		}
 
-		const preloadPromise = loadSdk().then( function ( api ) {
-			if ( typeof api.lookup !== 'function' ) {
-				return api;
+		const preloadPromise = checkAvailability( flexibleId ).then( function ( availability ) {
+			if ( ! availability.available ) {
+				return null;
 			}
 
-			return api.lookup( flexibleId ).then( function ( frameId ) {
-				if ( ! frameId ) {
-					throw new Error( 'Pyxd Draping frame was not found.' );
-				}
+			if ( availability.api ) {
+				return availability.api;
+			}
 
-				return api;
-			} );
+			return loadSdk();
 		} ).then( function ( api ) {
+			if ( ! api ) {
+				return null;
+			}
+
 			if ( typeof api.preload !== 'function' ) {
 				return api;
 			}
@@ -116,6 +193,30 @@
 		preloadPromises.set( flexibleId, preloadPromise );
 
 		return preloadPromise;
+	}
+
+	function setButtonVisibility( button, visible ) {
+		const wrapper = button.closest( '.kbpyxd-draping' );
+
+		if ( wrapper ) {
+			wrapper.hidden = ! visible;
+		}
+	}
+
+	function verifyButton( button ) {
+		const flexibleId = button.dataset.kbpyxdFlexibleId || config.flexibleId;
+
+		setButtonVisibility( button, false );
+
+		checkAvailability( flexibleId ).then( function ( availability ) {
+			setButtonVisibility( button, availability.available );
+
+			if ( availability.available && config.preload ) {
+				preload( flexibleId ).catch( function () {} );
+			}
+		} ).catch( function () {
+			setButtonVisibility( button, true );
+		} );
 	}
 
 	function setStatus( wrapper, message, isError ) {
@@ -145,20 +246,28 @@
 		setStatus( wrapper, '', false );
 
 		preload( flexibleId ).then( function ( api ) {
+			if ( ! api ) {
+				setButtonVisibility( button, false );
+				return null;
+			}
+
 			return api.showModal(
 				flexibleId,
 				undefined,
 				{ hoverPreview: Boolean( config.hoverPreview ) }
 			);
 		} ).then( function ( result ) {
+			if ( null === result ) {
+				return;
+			}
+
 			if ( result && result.outputString ) {
 				setStatus( wrapper, selectedMessage( result.outputString ), false );
 			}
 
 			document.dispatchEvent( new CustomEvent( 'kbpyxdDrapingSelection', { detail: result } ) );
-		} ).catch( function ( error ) {
-			const unavailable = error && /not found/i.test( error.message );
-			setStatus( wrapper, unavailable ? config.i18n.unavailable : config.i18n.loadError, true );
+		} ).catch( function () {
+			setStatus( wrapper, config.i18n.loadError, true );
 		} ).finally( function () {
 			button.disabled = false;
 			button.textContent = originalLabel;
@@ -187,13 +296,13 @@
 	document.addEventListener( 'pointerover', preloadOnInteraction );
 	document.addEventListener( 'focusin', preloadOnInteraction );
 
-	if ( config.preload && config.flexibleId ) {
-		if ( document.readyState === 'loading' ) {
-			document.addEventListener( 'DOMContentLoaded', function () {
-				preload( config.flexibleId ).catch( function () {} );
-			}, { once: true } );
-		} else {
-			preload( config.flexibleId ).catch( function () {} );
-		}
+	function verifyButtons() {
+		document.querySelectorAll( '[data-kbpyxd-open]' ).forEach( verifyButton );
+	}
+
+	if ( document.readyState === 'loading' ) {
+		document.addEventListener( 'DOMContentLoaded', verifyButtons, { once: true } );
+	} else {
+		verifyButtons();
 	}
 }() );

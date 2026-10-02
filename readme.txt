@@ -4,7 +4,7 @@ Tags: woocommerce, furniture, fabric, visualizer, pyxd
 Requires at least: 6.4
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -140,11 +140,14 @@ On an eligible product page, the plugin:
 
 1. Loads its local JavaScript and CSS only for that product.
 2. Loads the Pyxd SDK over HTTPS.
-3. Checks that the Flexible ID is available with Pyxd when the SDK supports lookup.
-4. Preloads the configured frame when enabled or requested by customer interaction.
-5. Opens Pyxd's self-contained modal when the customer clicks the button.
-6. Displays the returned output string beneath the button when Pyxd provides one.
-7. Dispatches a browser event containing the complete Pyxd result.
+3. Checks that each resolved Flexible ID or fallback SKU is available with Pyxd when the SDK supports lookup.
+4. Hides the corresponding button when Pyxd returns no matching frame.
+5. Preloads each available frame when enabled or requested by customer interaction.
+6. Opens Pyxd's self-contained modal when the customer clicks the button.
+7. Displays the returned output string beneath the button when Pyxd provides one.
+8. Dispatches a browser event containing the complete Pyxd result.
+
+Successful match and no-match lookup results are cached in the customer's browser for 24 hours using the Company ID and resolved identifier. SDK and network errors are not cached. The Preload visualizer setting may still load Pyxd assets on each eligible page view.
 
 The plugin does not change the WooCommerce product, variation, SKU, price, cart item, or order when a customer selects a swatch.
 
@@ -197,6 +200,10 @@ Uninstalling the plugin deletes its global WooCommerce settings. Product-level d
 * [Pyxd Draping Integration Guide](https://docs.google.com/document/d/15ko7qpLgOac2HcH2VDtqavZorJR7lwMged2hGTPItnI/edit)
 
 == Changelog ==
+
+= 1.1.2 =
+* Hide visualizer buttons when Pyxd has no match for the configured Flexible ID or fallback SKU.
+* Cache successful match and no-match browser lookups for 24 hours.
 
 = 1.1.1 =
 * Changed product behavior so the visualizer displays by default and can be explicitly disabled.
